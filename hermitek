@@ -1,0 +1,62 @@
+function y = hermitek(t, x, F, dInd, dVal)
+% Autor: Martyna Woroniak
+% Funkcja hermitek oblicza wielomian interpolacyjny w punktach wektora t.
+% x, F - wezly i wartosci nieznanej funkcji f w tych wezlach.
+% dInd, dVal - indeksy wezlow z pochodna i jej wartosci.
+% t - punkty w których wyznaczamy wartość wielomianu 
+
+% obliczanie wielomianu interpolacyjnego Newtona,
+%  gdy nie zostały podane pochodne 
+if isempty(dInd)
+  N = length(x);
+  x = x(:);
+  c = F(:);
+  for j = 2:N
+    for i = N:-1:j
+      c(i) = (c(i) - c(i-1)) / (x(i) - x(i-j+1));
+    end
+  end
+  
+  y = c(N) * ones(size(t));
+  for k = N-1:-1:1
+    y = c(k) + (t - x(k)) .* y;
+  end
+
+% obliczanie wielomianu interpolacyjnego Hermite'a 
+else
+  N = length(x) + length(dInd);
+  z = zeros(N, 1);
+  c = zeros(N, 1);
+  d = zeros(N, 1);
+  curr = 1;
+  
+  for i = 1:length(x)
+    z(curr) = x(i);
+    c(curr) = F(i);
+    curr = curr + 1;
+
+    % sprawdzanie czy punkt i ma pochodną 
+    idx = find(dInd == i, 1);
+    if ~isempty(idx)
+      z(curr) = x(i);
+      c(curr) = F(i);
+      d(curr) = dVal(idx);
+      curr = curr + 1;
+    end
+  end
+  
+  for j = 2:N
+    for i = N:-1:j
+      if z(i) == z(i-j+1)
+        c(i) = d(i);
+      else
+        c(i) = (c(i) - c(i-1)) / (z(i) - z(i-j+1));
+      end
+    end
+  end
+  
+  y = c(N) * ones(size(t));
+  for k = N-1:-1:1
+    y = c(k) + (t - z(k)) .* y;
+  end
+end % function
